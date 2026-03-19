@@ -1,15 +1,17 @@
 import { FormEventHandler, useState } from 'react';
 import { Head, Link, useForm, router } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
+import { PageProps } from '@/types';
 import { ShoppingList } from '@/types/models';
 import { useTrans } from '@/hooks/useTranslation';
 
-interface Props {
+interface Props extends PageProps {
     lists: ShoppingList[];
     showArchived: boolean;
+    currency: string;
 }
 
-export default function ShoppingIndex({ lists, showArchived }: Props) {
+export default function ShoppingIndex({ lists, showArchived, currency }: Props) {
     const t = useTrans();
     const [showCreateForm, setShowCreateForm] = useState(false);
 
@@ -83,73 +85,91 @@ export default function ShoppingIndex({ lists, showArchived }: Props) {
                 </div>
             ) : (
                 <div className="row g-3">
-                    {lists.map((list) => (
-                        <div key={list.id} className="col-md-6 col-lg-4">
-                            <div className="card border-0 shadow-sm h-100">
-                                <div className="card-body">
-                                    <div className="d-flex justify-content-between align-items-start mb-2">
-                                        <Link href={route('shopping.show', list.id)}
-                                            className="text-decoration-none text-dark">
-                                            <h6 className="fw-bold mb-0">{list.name}</h6>
-                                        </Link>
-                                        <div className="dropdown">
-                                            <button className="btn btn-sm btn-light" data-bs-toggle="dropdown">
-                                                <i className="bi bi-three-dots" />
-                                            </button>
-                                            <ul className="dropdown-menu dropdown-menu-end">
-                                                <li>
-                                                    <Link href={route('shopping.show', list.id)} className="dropdown-item">
-                                                        <i className="bi bi-eye me-2" />{t('view')}
-                                                    </Link>
-                                                </li>
-                                                {!list.is_archived && (
+                    {lists.map((list) => {
+                        const totalPrice = list.total_price ?? 0;
+                        const paidPrice = list.paid_price ?? 0;
+                        return (
+                            <div key={list.id} className="col-md-6 col-lg-4">
+                                <div className="card border-0 shadow-sm h-100">
+                                    <div className="card-body">
+                                        <div className="d-flex justify-content-between align-items-start mb-2">
+                                            <Link href={route('shopping.show', list.id)}
+                                                className="text-decoration-none text-dark">
+                                                <h6 className="fw-bold mb-0">{list.name}</h6>
+                                            </Link>
+                                            <div className="dropdown">
+                                                <button className="btn btn-sm btn-light" data-bs-toggle="dropdown">
+                                                    <i className="bi bi-three-dots" />
+                                                </button>
+                                                <ul className="dropdown-menu dropdown-menu-end">
                                                     <li>
-                                                        <button className="dropdown-item text-warning"
-                                                            onClick={() => { if (confirm(t('archive_list_confirm'))) router.post(route('shopping.archive', list.id)); }}>
-                                                            <i className="bi bi-archive me-2" />{t('archive')}
-                                                        </button>
+                                                        <Link href={route('shopping.show', list.id)} className="dropdown-item">
+                                                            <i className="bi bi-eye me-2" />{t('view')}
+                                                        </Link>
                                                     </li>
-                                                )}
-                                                <li><hr className="dropdown-divider" /></li>
-                                                <li>
-                                                    <Link href={route('shopping.destroy', list.id)} method="delete" as="button"
-                                                        className="dropdown-item text-danger"
-                                                        onClick={(e) => { if (!confirm(t('delete_list_confirm'))) e.preventDefault(); }}>
-                                                        <i className="bi bi-trash me-2" />{t('delete')}
-                                                    </Link>
-                                                </li>
-                                            </ul>
+                                                    {!list.is_archived && (
+                                                        <li>
+                                                            <button className="dropdown-item text-warning"
+                                                                onClick={() => { if (confirm(t('archive_list_confirm'))) router.post(route('shopping.archive', list.id)); }}>
+                                                                <i className="bi bi-archive me-2" />{t('archive')}
+                                                            </button>
+                                                        </li>
+                                                    )}
+                                                    <li><hr className="dropdown-divider" /></li>
+                                                    <li>
+                                                        <Link href={route('shopping.destroy', list.id)} method="delete" as="button"
+                                                            className="dropdown-item text-danger"
+                                                            onClick={(e) => { if (!confirm(t('delete_list_confirm'))) e.preventDefault(); }}>
+                                                            <i className="bi bi-trash me-2" />{t('delete')}
+                                                        </Link>
+                                                    </li>
+                                                </ul>
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    {list.notes && (
-                                        <p className="text-muted small mb-2">{list.notes}</p>
-                                    )}
+                                        {list.notes && (
+                                            <p className="text-muted small mb-2">{list.notes}</p>
+                                        )}
 
-                                    {/* Progress */}
-                                    <div className="mb-2">
-                                        <div className="d-flex justify-content-between small mb-1">
-                                            <span className="text-muted">{list.checked_count ?? 0}/{list.item_count ?? 0} {t('items')}</span>
-                                            <span className="fw-semibold">{list.progress}%</span>
+                                        {/* Progress */}
+                                        <div className="mb-2">
+                                            <div className="d-flex justify-content-between small mb-1">
+                                                <span className="text-muted">{list.checked_count ?? 0}/{list.item_count ?? 0} {t('items')}</span>
+                                                <span className="fw-semibold">{list.progress}%</span>
+                                            </div>
+                                            <div className="progress" style={{ height: 6 }}>
+                                                <div className={`progress-bar ${list.progress === 100 ? 'bg-success' : 'bg-primary'}`}
+                                                    style={{ width: `${list.progress}%` }} />
+                                            </div>
                                         </div>
-                                        <div className="progress" style={{ height: 6 }}>
-                                            <div className={`progress-bar ${list.progress === 100 ? 'bg-success' : 'bg-primary'}`}
-                                                style={{ width: `${list.progress}%` }} />
-                                        </div>
-                                    </div>
 
-                                    <div className="d-flex justify-content-between align-items-center mt-3">
-                                        <small className="text-muted">
-                                            {t('by')} {list.creator.display_name ?? list.creator.name}
-                                        </small>
-                                        <Link href={route('shopping.show', list.id)} className="btn btn-sm btn-outline-primary">
-                                            {t('open')} <i className="bi bi-arrow-right ms-1" />
-                                        </Link>
+                                        {/* Price Summary */}
+                                        {totalPrice > 0 && (
+                                            <div className="d-flex justify-content-between small mb-2">
+                                                <span className="text-muted">{t('total')}:</span>
+                                                <strong>{totalPrice.toFixed(2)} {currency}</strong>
+                                            </div>
+                                        )}
+                                        {paidPrice > 0 && totalPrice > 0 && (
+                                            <div className="d-flex justify-content-between small mb-2">
+                                                <span className="text-success">{t('paid')}:</span>
+                                                <span className="text-success fw-semibold">{paidPrice.toFixed(2)} {currency}</span>
+                                            </div>
+                                        )}
+
+                                        <div className="d-flex justify-content-between align-items-center mt-3">
+                                            <small className="text-muted">
+                                                {t('by')} {list.creator.display_name ?? list.creator.name}
+                                            </small>
+                                            <Link href={route('shopping.show', list.id)} className="btn btn-sm btn-outline-primary">
+                                                {t('open')} <i className="bi bi-arrow-right ms-1" />
+                                            </Link>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
         </AppLayout>

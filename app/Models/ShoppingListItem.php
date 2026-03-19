@@ -12,6 +12,7 @@ class ShoppingListItem extends Model
         'name',
         'quantity',
         'unit',
+        'price',
         'notes',
         'is_checked',
         'checked_by',
@@ -23,6 +24,7 @@ class ShoppingListItem extends Model
         'is_checked' => 'boolean',
         'checked_at' => 'datetime',
         'quantity' => 'decimal:2',
+        'price' => 'decimal:2',
         'sort_order' => 'integer',
     ];
 

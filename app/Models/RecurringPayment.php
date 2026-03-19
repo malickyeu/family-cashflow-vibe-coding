@@ -19,6 +19,7 @@ class RecurringPayment extends Model
         'is_active',
         'send_reminder',
         'reminder_days_before',
+        'family_id',
     ];
 
     protected $casts = [

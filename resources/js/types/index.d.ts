@@ -1,4 +1,4 @@
-import { User } from './models';
+import { Family, User } from './models';
 
 export type PageProps<T extends Record<string, unknown> = Record<string, unknown>> = T & {
     auth: {
@@ -16,4 +16,6 @@ export type PageProps<T extends Record<string, unknown> = Record<string, unknown
     };
     locale: string;
     translations: Record<string, string>;
+    currentFamily: Family | null;
+    userFamilies: Array<{ id: number; name: string; pivot_role: 'owner' | 'member' }>;
 };

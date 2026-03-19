@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Traits\ResolvesFamily;
 use App\Models\Todo;
 use App\Models\User;
 use App\Http\Requests\StoreTodoRequest;
@@ -12,9 +13,11 @@ use Inertia\Response;
 
 class TodoController extends Controller
 {
+    use ResolvesFamily;
+
     public function index(Request $request): Response
     {
-        $query = Todo::with(['assignedUser', 'creator']);
+        $query = $this->applyScope(Todo::with(['assignedUser', 'creator']), 'created_by');
 
         if ($request->filled('status')) {
             $query->where('is_completed', $request->status === 'completed');
@@ -32,7 +35,7 @@ class TodoController extends Controller
 
         return Inertia::render('Todos/Index', [
             'todos'   => $query->get(),
-            'users'   => User::select('id', 'name', 'display_name', 'avatar_color')->orderBy('name')->get(),
+            'users'   => $this->contextUsers(),
             'filters' => $request->only(['status', 'priority', 'assigned_to']),
         ]);
     }
@@ -42,6 +45,7 @@ class TodoController extends Controller
         Todo::create([
             ...$request->validated(),
             'created_by' => auth()->id(),
+            'family_id'  => $this->currentFamilyId(),
         ]);
 
         return back()->with('success', 'Todo created.');

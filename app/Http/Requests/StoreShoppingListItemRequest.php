@@ -13,13 +13,17 @@ class StoreShoppingListItemRequest extends FormRequest
 
     public function rules(): array
     {
+        // Při update (PATCH) jsou všechna pole volitelná, při store (POST) je name povinné
+        $isUpdate = $this->isMethod('PATCH');
+
         return [
-            'name'       => 'required|string|max:200',
-            'quantity'   => 'required|numeric|min:0.01',
+            'name'       => $isUpdate ? 'sometimes|string|max:200' : 'required|string|max:200',
+            'quantity'   => 'sometimes|numeric|min:0.01',
             'unit'       => 'nullable|string|max:20',
+            'price'      => 'nullable|numeric|min:0',
             'notes'      => 'nullable|string|max:255',
-            'is_checked' => 'boolean',
-            'sort_order' => 'integer',
+            'is_checked' => 'sometimes|boolean',
+            'sort_order' => 'sometimes|integer',
         ];
     }
 }

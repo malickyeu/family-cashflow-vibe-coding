@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Traits\ResolvesFamily;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
@@ -10,10 +11,12 @@ use Inertia\Response;
 
 class CategoryController extends Controller
 {
+    use ResolvesFamily;
+
     public function index(): Response
     {
         return Inertia::render('Categories/Index', [
-            'categories' => Category::visibleTo(auth()->id())
+            'categories' => Category::forContext($this->currentFamilyId(), auth()->id())
                 ->orderByDesc('is_predefined')
                 ->orderBy('name')
                 ->get(),
@@ -31,7 +34,8 @@ class CategoryController extends Controller
 
         Category::create([
             ...$validated,
-            'user_id'      => auth()->id(),
+            'user_id'       => auth()->id(),
+            'family_id'     => $this->currentFamilyId(),
             'is_predefined' => false,
         ]);
 

@@ -21,8 +21,25 @@ interface Props {
     recentTransactions: Transaction[];
     upcomingRecurring: RecurringPayment[];
     pendingTodos: Todo[];
+    incompleteLists: ShoppingListSummary[];
+    completeLists: ShoppingListSummary[];
     chartData: ChartPoint[];
     currency: string;
+}
+
+interface ShoppingListSummary {
+    id: number;
+    name: string;
+    progress: number;
+    item_count: number;
+    checked_count: number;
+    total_price: number;
+    paid_price: number;
+    creator: {
+        id: number;
+        name: string;
+        display_name: string | null;
+    };
 }
 
 function fmt(amount: number, currency: string) {
@@ -33,7 +50,8 @@ const priorityBadge = (p: string) =>
     p === 'high' ? 'bg-danger' : p === 'medium' ? 'bg-warning text-dark' : 'bg-secondary';
 
 export default function DashboardIndex({
-    stats, recentTransactions, upcomingRecurring, pendingTodos, chartData, currency,
+    stats, recentTransactions, upcomingRecurring, pendingTodos, 
+    incompleteLists, completeLists, chartData, currency,
 }: Props) {
     const t = useTrans();
     const maxChart = Math.max(...chartData.map(d => Math.max(d.income, d.expense)), 1);
@@ -193,6 +211,100 @@ export default function DashboardIndex({
                                 <li className="list-group-item text-center text-muted py-4">
                                     <i className="bi bi-calendar-check fs-3 d-block mb-2 opacity-50" />
                                     {t('no_upcoming_payments')}
+                                </li>
+                            )}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            {/* Shopping Lists Section */}
+            <div className="row g-3 mb-3">
+                {/* Incomplete Shopping Lists */}
+                <div className="col-lg-6">
+                    <div className="card border-0 shadow-sm h-100">
+                        <div className="card-header bg-white border-bottom d-flex justify-content-between align-items-center py-3">
+                            <span className="fw-semibold">
+                                <i className="bi bi-cart3 me-2 text-warning" />
+                                {t('incomplete_shopping_lists')}
+                            </span>
+                            <Link href={route('shopping.index')} className="btn btn-sm btn-outline-primary">
+                                {t('view_all')}
+                            </Link>
+                        </div>
+                        <ul className="list-group list-group-flush">
+                            {incompleteLists.map((list) => (
+                                <li key={list.id} className="list-group-item py-3">
+                                    <Link href={route('shopping.show', list.id)} className="text-decoration-none text-dark">
+                                        <div className="d-flex justify-content-between align-items-start mb-2">
+                                            <div className="fw-semibold">{list.name}</div>
+                                            <span className="badge bg-warning text-dark">{list.progress}%</span>
+                                        </div>
+                                        <div className="d-flex justify-content-between align-items-center">
+                                            <small className="text-muted">
+                                                {list.checked_count}/{list.item_count} {t('items')}
+                                            </small>
+                                            {list.total_price > 0 && (
+                                                <small className="fw-semibold">
+                                                    {list.paid_price.toFixed(0)}/{list.total_price.toFixed(0)} {currency}
+                                                </small>
+                                            )}
+                                        </div>
+                                        <div className="progress mt-2" style={{ height: 4 }}>
+                                            <div className="progress-bar bg-warning" style={{ width: `${list.progress}%` }} />
+                                        </div>
+                                    </Link>
+                                </li>
+                            ))}
+                            {incompleteLists.length === 0 && (
+                                <li className="list-group-item text-center text-muted py-4">
+                                    <i className="bi bi-cart-check fs-3 d-block mb-2 opacity-50" />
+                                    {t('no_incomplete_lists')}
+                                </li>
+                            )}
+                        </ul>
+                    </div>
+                </div>
+
+                {/* Complete Shopping Lists */}
+                <div className="col-lg-6">
+                    <div className="card border-0 shadow-sm h-100">
+                        <div className="card-header bg-white border-bottom d-flex justify-content-between align-items-center py-3">
+                            <span className="fw-semibold">
+                                <i className="bi bi-check-circle me-2 text-success" />
+                                {t('complete_shopping_lists')}
+                            </span>
+                            <Link href={route('shopping.index')} className="btn btn-sm btn-outline-primary">
+                                {t('view_all')}
+                            </Link>
+                        </div>
+                        <ul className="list-group list-group-flush">
+                            {completeLists.map((list) => (
+                                <li key={list.id} className="list-group-item py-3">
+                                    <Link href={route('shopping.show', list.id)} className="text-decoration-none text-dark">
+                                        <div className="d-flex justify-content-between align-items-start mb-2">
+                                            <div className="fw-semibold text-success">
+                                                <i className="bi bi-check-circle-fill me-1" />
+                                                {list.name}
+                                            </div>
+                                        </div>
+                                        <div className="d-flex justify-content-between align-items-center">
+                                            <small className="text-muted">
+                                                {list.item_count} {t('items')} · {t('by')} {list.creator.display_name ?? list.creator.name}
+                                            </small>
+                                            {list.total_price > 0 && (
+                                                <small className="text-success fw-semibold">
+                                                    {list.total_price.toFixed(0)} {currency}
+                                                </small>
+                                            )}
+                                        </div>
+                                    </Link>
+                                </li>
+                            ))}
+                            {completeLists.length === 0 && (
+                                <li className="list-group-item text-center text-muted py-4">
+                                    <i className="bi bi-cart-x fs-3 d-block mb-2 opacity-50" />
+                                    {t('no_complete_lists')}
                                 </li>
                             )}
                         </ul>

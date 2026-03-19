@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Traits\ResolvesFamily;
 use App\Models\Transaction;
 use App\Models\Category;
-use App\Models\User;
 use App\Http\Requests\StoreTransactionRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
@@ -13,9 +13,11 @@ use Inertia\Response;
 
 class TransactionController extends Controller
 {
+    use ResolvesFamily;
+
     public function index(Request $request): Response
     {
-        $query = Transaction::with(['category', 'user'])
+        $query = $this->applyScope(Transaction::with(['category', 'user']))
             ->orderByDesc('date')
             ->orderByDesc('id');
 
@@ -35,7 +37,7 @@ class TransactionController extends Controller
 
         $transactions = $query->paginate(25)->withQueryString();
 
-        $summaryQuery = Transaction::query();
+        $summaryQuery = $this->applyScope(Transaction::query());
         if ($request->filled('month')) {
             [$year, $month] = explode('-', $request->month);
             $summaryQuery->whereYear('date', $year)->whereMonth('date', $month);
@@ -53,8 +55,8 @@ class TransactionController extends Controller
         return Inertia::render('Transactions/Index', [
             'transactions' => $transactions,
             'summary'      => $summary,
-            'categories'   => Category::visibleTo(auth()->id())->orderBy('name')->get(),
-            'users'        => User::select('id', 'name', 'display_name', 'avatar_color')->orderBy('name')->get(),
+            'categories'   => Category::forContext($this->currentFamilyId(), auth()->id())->orderBy('name')->get(),
+            'users'        => $this->contextUsers(),
             'filters'      => $request->only(['month', 'category_id', 'type', 'user_id']),
             'currency'     => config('app.currency', 'PLN'),
         ]);
@@ -63,8 +65,8 @@ class TransactionController extends Controller
     public function create(): Response
     {
         return Inertia::render('Transactions/Form', [
-            'categories' => Category::visibleTo(auth()->id())->orderBy('name')->get(),
-            'users'      => User::select('id', 'name', 'display_name', 'avatar_color')->orderBy('name')->get(),
+            'categories' => Category::forContext($this->currentFamilyId(), auth()->id())->orderBy('name')->get(),
+            'users'      => $this->contextUsers(),
             'currency'   => config('app.currency', 'PLN'),
         ]);
     }
@@ -74,6 +76,7 @@ class TransactionController extends Controller
         Transaction::create([
             ...$request->validated(),
             'created_by' => auth()->id(),
+            'family_id'  => $this->currentFamilyId(),
         ]);
 
         return redirect()->route('transactions.index')
@@ -84,8 +87,8 @@ class TransactionController extends Controller
     {
         return Inertia::render('Transactions/Form', [
             'transaction' => $transaction->load('category'),
-            'categories'  => Category::visibleTo(auth()->id())->orderBy('name')->get(),
-            'users'       => User::select('id', 'name', 'display_name', 'avatar_color')->orderBy('name')->get(),
+            'categories'  => Category::forContext($this->currentFamilyId(), auth()->id())->orderBy('name')->get(),
+            'users'       => $this->contextUsers(),
             'currency'    => config('app.currency', 'PLN'),
         ]);
     }

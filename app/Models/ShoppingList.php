@@ -14,6 +14,7 @@ class ShoppingList extends Model
         'created_by',
         'is_archived',
         'archived_at',
+        'family_id',
     ];
 
     protected $casts = [

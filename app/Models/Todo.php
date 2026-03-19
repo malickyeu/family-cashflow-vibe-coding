@@ -16,6 +16,7 @@ class Todo extends Model
         'created_by',
         'is_completed',
         'completed_at',
+        'family_id',
     ];
 
     protected $casts = [

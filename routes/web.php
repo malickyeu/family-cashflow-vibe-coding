@@ -10,6 +10,7 @@ use App\Http\Controllers\ShoppingListItemController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\FamilyController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/dashboard');
@@ -52,6 +53,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // User management (admin only)
     Route::resource('users', UserController::class)->middleware('admin');
+
+    // Families
+    Route::resource('families', FamilyController::class)->except(['edit', 'update']);
+    Route::post('families/{family}/invite', [FamilyController::class, 'invite'])->name('families.invite');
+    Route::delete('families/{family}/members/{user}', [FamilyController::class, 'removeMember'])->name('families.remove-member');
+    Route::post('family/switch', [FamilyController::class, 'switchFamily'])->name('family.switch');
 });
 
 require __DIR__.'/auth.php';

@@ -1,12 +1,16 @@
 import { FormEventHandler, useState } from 'react';
 import { Head, useForm, router, Link } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
+import { PageProps } from '@/types';
 import { ShoppingList, ShoppingListItem } from '@/types/models';
 import { useTrans } from '@/hooks/useTranslation';
 
-interface Props { list: ShoppingList; }
+interface Props extends PageProps { 
+    list: ShoppingList; 
+    currency: string;
+}
 
-export default function ShoppingShow({ list }: Props) {
+export default function ShoppingShow({ list, currency }: Props) {
     const t = useTrans();
     const [showAddItem, setShowAddItem] = useState(false);
 
@@ -14,6 +18,7 @@ export default function ShoppingShow({ list }: Props) {
         name: '',
         quantity: '1',
         unit: '',
+        price: '',
         notes: '',
     });
 
@@ -25,9 +30,11 @@ export default function ShoppingShow({ list }: Props) {
     };
 
     function toggleItem(item: ShoppingListItem) {
-        router.patch(route('shopping.items.update', [list.id, item.id]), {
-            is_checked: !item.is_checked,
-        }, { preserveScroll: true });
+        router.patch(
+            route('shopping.items.update', [list.id, item.id]), 
+            { is_checked: !item.is_checked },
+            { preserveScroll: true }
+        );
     }
 
     const items = list.items ?? [];
@@ -36,6 +43,10 @@ export default function ShoppingShow({ list }: Props) {
     const totalItems = items.length;
     const checkedCount = checked.length;
     const progress = totalItems > 0 ? Math.round((checkedCount / totalItems) * 100) : 0;
+
+    const totalPrice = list.total_price ?? 0;
+    const paidPrice = list.paid_price ?? 0;
+    const unpaidPrice = totalPrice - paidPrice;
 
     return (
         <AppLayout>
@@ -77,7 +88,7 @@ export default function ShoppingShow({ list }: Props) {
                 </div>
             </div>
 
-            {/* Progress */}
+            {/* Progress & Price Summary */}
             {totalItems > 0 && (
                 <div className="mb-4">
                     <div className="d-flex justify-content-between small mb-1">
@@ -93,6 +104,22 @@ export default function ShoppingShow({ list }: Props) {
                             <i className="bi bi-check-circle-fill me-1" />{t('all_items_checked')}
                         </p>
                     )}
+                    {totalPrice > 0 && (
+                        <div className="mt-3 d-flex gap-3 justify-content-start flex-wrap small">
+                            <div className="d-flex align-items-center gap-2">
+                                <span className="text-muted">{t('total')}:</span>
+                                <strong className="fs-6">{totalPrice.toFixed(2)} {currency}</strong>
+                            </div>
+                            <div className="d-flex align-items-center gap-2">
+                                <span className="text-muted">{t('paid')}:</span>
+                                <strong className="text-success">{paidPrice.toFixed(2)} {currency}</strong>
+                            </div>
+                            <div className="d-flex align-items-center gap-2">
+                                <span className="text-muted">{t('unpaid')}:</span>
+                                <strong className="text-warning">{unpaidPrice.toFixed(2)} {currency}</strong>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -105,24 +132,40 @@ export default function ShoppingShow({ list }: Props) {
                     </div>
                 ) : (
                     <ul className="list-group list-group-flush">
-                        {unchecked.map((item) => (
-                            <li key={item.id} className="list-group-item d-flex align-items-center gap-3 py-3">
-                                <input type="checkbox" className="form-check-input flex-shrink-0"
-                                    style={{ cursor: 'pointer', width: '1.2em', height: '1.2em' }}
-                                    checked={false} onChange={() => toggleItem(item)} />
-                                <div className="flex-grow-1">
-                                    <span className="fw-semibold">{item.name}</span>
-                                    <span className="text-muted ms-2 small">
-                                        {item.quantity} {item.unit || t('pcs')}
-                                    </span>
-                                    {item.notes && <small className="text-muted d-block">{item.notes}</small>}
-                                </div>
-                                <button className="btn btn-sm btn-light text-danger flex-shrink-0"
-                                    onClick={() => router.delete(route('shopping.items.destroy', [list.id, item.id]))}>
-                                    <i className="bi bi-x-lg" />
-                                </button>
-                            </li>
-                        ))}
+                        {unchecked.map((item) => {
+                            const itemPrice = item.price ? parseFloat(item.price) : 0;
+                            const itemTotal = itemPrice * parseFloat(item.quantity);
+                            return (
+                                <li key={item.id} className="list-group-item d-flex align-items-center gap-3 py-3">
+                                    <input type="checkbox" className="form-check-input flex-shrink-0"
+                                        style={{ cursor: 'pointer', width: '1.2em', height: '1.2em' }}
+                                        checked={false} 
+                                        onChange={() => toggleItem(item)} />
+                                    <div className="flex-grow-1">
+                                        <div className="d-flex align-items-center gap-2">
+                                            <span className="fw-semibold">{item.name}</span>
+                                            <span className="text-muted small">
+                                                {item.quantity} {item.unit || t('pcs')}
+                                            </span>
+                                            {itemPrice > 0 && (
+                                                <span className="badge bg-light text-dark border">
+                                                    {itemTotal.toFixed(2)} {currency}
+                                                </span>
+                                            )}
+                                        </div>
+                                        {item.notes && <small className="text-muted d-block">{item.notes}</small>}
+                                    </div>
+                                    <button className="btn btn-sm btn-light text-danger flex-shrink-0"
+                                        onClick={() => {
+                                            if (confirm(t('delete_item_confirm'))) {
+                                                router.delete(route('shopping.items.destroy', [list.id, item.id]));
+                                            }
+                                        }}>
+                                        <i className="bi bi-x-lg" />
+                                    </button>
+                                </li>
+                            );
+                        })}
 
                         {/* Divider for checked items */}
                         {checked.length > 0 && unchecked.length > 0 && (
@@ -131,28 +174,44 @@ export default function ShoppingShow({ list }: Props) {
                             </li>
                         )}
 
-                        {checked.map((item) => (
-                            <li key={item.id} className="list-group-item d-flex align-items-center gap-3 py-2 opacity-50">
-                                <input type="checkbox" className="form-check-input flex-shrink-0"
-                                    style={{ cursor: 'pointer', width: '1.2em', height: '1.2em' }}
-                                    checked={true} onChange={() => toggleItem(item)} />
-                                <div className="flex-grow-1">
-                                    <span className="text-decoration-line-through text-muted">{item.name}</span>
-                                    <span className="text-muted ms-2 small">
-                                        {item.quantity} {item.unit || t('pcs')}
-                                    </span>
-                                    {item.checked_by && (
-                                        <small className="text-muted d-block">
-                                            {t('by')} {item.checked_by.display_name ?? item.checked_by.name}
-                                        </small>
-                                    )}
-                                </div>
-                                <button className="btn btn-sm btn-light text-danger flex-shrink-0"
-                                    onClick={() => router.delete(route('shopping.items.destroy', [list.id, item.id]))}>
-                                    <i className="bi bi-x-lg" />
-                                </button>
-                            </li>
-                        ))}
+                        {checked.map((item) => {
+                            const itemPrice = item.price ? parseFloat(item.price) : 0;
+                            const itemTotal = itemPrice * parseFloat(item.quantity);
+                            return (
+                                <li key={item.id} className="list-group-item d-flex align-items-center gap-3 py-2 opacity-50">
+                                    <input type="checkbox" className="form-check-input flex-shrink-0"
+                                        style={{ cursor: 'pointer', width: '1.2em', height: '1.2em' }}
+                                        checked={true} 
+                                        onChange={() => toggleItem(item)} />
+                                    <div className="flex-grow-1">
+                                        <div className="d-flex align-items-center gap-2">
+                                            <span className="text-decoration-line-through text-muted">{item.name}</span>
+                                            <span className="text-muted small">
+                                                {item.quantity} {item.unit || t('pcs')}
+                                            </span>
+                                            {itemPrice > 0 && (
+                                                <span className="badge bg-light text-muted border">
+                                                    {itemTotal.toFixed(2)} {currency}
+                                                </span>
+                                            )}
+                                        </div>
+                                        {item.checked_by && (
+                                            <small className="text-muted d-block">
+                                                {t('by')} {item.checked_by.display_name ?? item.checked_by.name}
+                                            </small>
+                                        )}
+                                    </div>
+                                    <button className="btn btn-sm btn-light text-danger flex-shrink-0"
+                                        onClick={() => {
+                                            if (confirm(t('delete_item_confirm'))) {
+                                                router.delete(route('shopping.items.destroy', [list.id, item.id]));
+                                            }
+                                        }}>
+                                        <i className="bi bi-x-lg" />
+                                    </button>
+                                </li>
+                            );
+                        })}
                     </ul>
                 )}
             </div>
@@ -163,7 +222,7 @@ export default function ShoppingShow({ list }: Props) {
                     <div className="card-body p-3">
                         <form onSubmit={addItem} noValidate>
                             <div className="row g-2 align-items-end">
-                                <div className="col-md-4">
+                                <div className="col-md-3">
                                     <label className="form-label form-label-sm fw-semibold">{t('item_name')} *</label>
                                     <input className={`form-control${errors.name ? ' is-invalid' : ''}`}
                                         placeholder="e.g. Milk, Bread…" autoFocus
@@ -175,12 +234,18 @@ export default function ShoppingShow({ list }: Props) {
                                     <input type="number" step="0.01" min="0.01" className="form-control"
                                         value={data.quantity} onChange={(e) => setData('quantity', e.target.value)} />
                                 </div>
-                                <div className="col-md-2">
+                                <div className="col-md-1">
                                     <label className="form-label form-label-sm">{t('unit')}</label>
-                                    <input className="form-control" placeholder="kg, pcs, l…"
+                                    <input className="form-control" placeholder="kg, l…"
                                         value={data.unit} onChange={(e) => setData('unit', e.target.value)} />
                                 </div>
-                                <div className="col-md-3">
+                                <div className="col-md-2">
+                                    <label className="form-label form-label-sm">{t('price')}</label>
+                                    <input type="number" step="0.01" min="0" className="form-control"
+                                        placeholder="0.00"
+                                        value={data.price} onChange={(e) => setData('price', e.target.value)} />
+                                </div>
+                                <div className="col-md-2">
                                     <label className="form-label form-label-sm">{t('notes')}</label>
                                     <input className="form-control" placeholder="Optional…"
                                         value={data.notes} onChange={(e) => setData('notes', e.target.value)} />

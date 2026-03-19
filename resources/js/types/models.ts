@@ -7,6 +7,25 @@ export interface User {
     email_verified_at: string | null;
     locale: string;
     role: 'admin' | 'member';
+    current_family_id: number | null;
+}
+
+export interface FamilyMember {
+    id: number;
+    name: string;
+    display_name: string | null;
+    email: string;
+    avatar_color: string | null;
+    role: 'owner' | 'member';
+}
+
+export interface Family {
+    id: number;
+    name: string;
+    created_by: number;
+    owner?: User;
+    members_count?: number;
+    pivot_role?: 'owner' | 'member';
 }
 
 export interface Category {
@@ -80,6 +99,8 @@ export interface ShoppingList {
     progress: number;
     item_count?: number;
     checked_count?: number;
+    total_price?: number;
+    paid_price?: number;
     items?: ShoppingListItem[];
     created_at: string;
     updated_at: string;
@@ -91,6 +112,7 @@ export interface ShoppingListItem {
     name: string;
     quantity: string;
     unit: string | null;
+    price: string | null;
     notes: string | null;
     is_checked: boolean;
     checked_by: User | null;

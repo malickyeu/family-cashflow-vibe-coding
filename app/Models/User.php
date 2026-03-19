@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
@@ -19,6 +21,7 @@ class User extends Authenticatable
         'password',
         'locale',
         'role',
+        'current_family_id',
     ];
 
     protected $hidden = [
@@ -62,6 +65,27 @@ class User extends Authenticatable
     public function shoppingLists(): HasMany
     {
         return $this->hasMany(ShoppingList::class, 'created_by');
+    }
+
+    public function families(): BelongsToMany
+    {
+        return $this->belongsToMany(Family::class, 'family_user')
+            ->withPivot('role', 'joined_at');
+    }
+
+    public function ownedFamilies(): HasMany
+    {
+        return $this->hasMany(Family::class, 'created_by');
+    }
+
+    public function currentFamily(): BelongsTo
+    {
+        return $this->belongsTo(Family::class, 'current_family_id');
+    }
+
+    public function switchFamily(?int $familyId): void
+    {
+        $this->update(['current_family_id' => $familyId]);
     }
 
     public function isAdmin(): bool

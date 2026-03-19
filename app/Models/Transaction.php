@@ -18,6 +18,7 @@ class Transaction extends Model
         'created_by',
         'recurring_payment_id',
         'is_auto_generated',
+        'family_id',
     ];
 
     protected $casts = [

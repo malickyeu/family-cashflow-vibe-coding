@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Traits\ResolvesFamily;
 use App\Models\RecurringPayment;
 use App\Models\Category;
 use App\Http\Requests\StoreRecurringPaymentRequest;
@@ -11,9 +12,11 @@ use Inertia\Response;
 
 class RecurringPaymentController extends Controller
 {
+    use ResolvesFamily;
+
     public function index(): Response
     {
-        $payments = RecurringPayment::with(['category', 'user'])
+        $payments = $this->applyScope(RecurringPayment::with(['category', 'user']), 'user_id')
             ->orderBy('next_due_date')
             ->get();
 
@@ -26,7 +29,7 @@ class RecurringPaymentController extends Controller
     public function create(): Response
     {
         return Inertia::render('RecurringPayments/Form', [
-            'categories' => Category::visibleTo(auth()->id())->orderBy('name')->get(),
+            'categories' => Category::forContext($this->currentFamilyId(), auth()->id())->orderBy('name')->get(),
             'currency'   => config('app.currency', 'PLN'),
         ]);
     }
@@ -35,7 +38,8 @@ class RecurringPaymentController extends Controller
     {
         RecurringPayment::create([
             ...$request->validated(),
-            'user_id' => auth()->id(),
+            'user_id'   => auth()->id(),
+            'family_id' => $this->currentFamilyId(),
         ]);
 
         return redirect()->route('recurring.index')
@@ -46,7 +50,7 @@ class RecurringPaymentController extends Controller
     {
         return Inertia::render('RecurringPayments/Form', [
             'payment'    => $recurring,
-            'categories' => Category::visibleTo(auth()->id())->orderBy('name')->get(),
+            'categories' => Category::forContext($this->currentFamilyId(), auth()->id())->orderBy('name')->get(),
             'currency'   => config('app.currency', 'PLN'),
         ]);
     }

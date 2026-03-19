@@ -16,6 +16,7 @@ class Category extends Model
         'type',
         'is_predefined',
         'user_id',
+        'family_id',
     ];
 
     protected $casts = [
@@ -42,6 +43,20 @@ class Category extends Model
         return $query->where(function ($q) use ($userId) {
             $q->where('is_predefined', true)
               ->orWhere('user_id', $userId);
+        });
+    }
+
+    public function scopeForContext(Builder $query, ?int $familyId, int $userId): Builder
+    {
+        return $query->where(function ($q) use ($familyId, $userId) {
+            $q->where('is_predefined', true);
+            if ($familyId) {
+                $q->orWhere('family_id', $familyId);
+            } else {
+                $q->orWhere(function ($sub) use ($userId) {
+                    $sub->where('user_id', $userId)->whereNull('family_id');
+                });
+            }
         });
     }
 }

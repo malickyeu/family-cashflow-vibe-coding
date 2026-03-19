@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Traits\ResolvesFamily;
 use App\Models\ShoppingList;
 use App\Http\Requests\StoreShoppingListRequest;
 use Illuminate\Http\Request;
@@ -11,11 +12,13 @@ use Inertia\Response;
 
 class ShoppingListController extends Controller
 {
+    use ResolvesFamily;
+
     public function index(Request $request): Response
     {
         $showArchived = $request->boolean('archived', false);
 
-        $lists = ShoppingList::with(['creator', 'items'])
+        $lists = $this->applyScope(ShoppingList::with(['creator', 'items']), 'created_by')
             ->where('is_archived', $showArchived)
             ->orderByDesc('updated_at')
             ->get()
@@ -29,6 +32,7 @@ class ShoppingListController extends Controller
         return Inertia::render('Shopping/Index', [
             'lists'        => $lists,
             'showArchived' => $showArchived,
+            'currency'     => config('app.currency', 'CZK'),
         ]);
     }
 
@@ -37,6 +41,7 @@ class ShoppingListController extends Controller
         $list = ShoppingList::create([
             ...$request->validated(),
             'created_by' => auth()->id(),
+            'family_id'  => $this->currentFamilyId(),
         ]);
 
         return redirect()->route('shopping.show', $list)
@@ -47,10 +52,16 @@ class ShoppingListController extends Controller
     {
         $shopping->load(['items.checkedByUser', 'creator']);
 
+        $totalPrice = $shopping->items->sum(fn($item) => ($item->price ?? 0) * $item->quantity);
+        $paidPrice = $shopping->items->where('is_checked', true)->sum(fn($item) => ($item->price ?? 0) * $item->quantity);
+
         return Inertia::render('Shopping/Show', [
             'list' => array_merge($shopping->toArray(), [
                 'progress' => $shopping->progress,
+                'total_price' => (float) $totalPrice,
+                'paid_price' => (float) $paidPrice,
             ]),
+            'currency' => config('app.currency', 'CZK'),
         ]);
     }
 
