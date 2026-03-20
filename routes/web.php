@@ -11,6 +11,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\FamilyController;
+use App\Http\Controllers\CalendarController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/dashboard');
@@ -59,6 +60,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('families/{family}/invite', [FamilyController::class, 'invite'])->name('families.invite');
     Route::delete('families/{family}/members/{user}', [FamilyController::class, 'removeMember'])->name('families.remove-member');
     Route::post('family/switch', [FamilyController::class, 'switchFamily'])->name('family.switch');
+
+    // Calendar
+    Route::get('calendar', [CalendarController::class, 'index'])->name('calendar.index');
+    Route::post('calendar', [CalendarController::class, 'store'])->name('calendar.store');
+    Route::patch('calendar/{event}', [CalendarController::class, 'update'])->name('calendar.update');
+    Route::patch('calendar/{event}/move', [CalendarController::class, 'move'])->name('calendar.move');
+    Route::delete('calendar/{event}', [CalendarController::class, 'destroy'])->name('calendar.destroy');
 });
 
 require __DIR__.'/auth.php';

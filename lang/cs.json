@@ -1,7 +1,6 @@
 {
     "app_name": "Rodinné Finance",
     "manage_finances": "Spravujte rodinné finance",
-
     "nav_dashboard": "Přehled",
     "nav_transactions": "Transakce",
     "nav_recurring": "Pravidelné",
@@ -10,7 +9,6 @@
     "nav_users": "Uživatelé",
     "nav_profile": "Profil",
     "nav_logout": "Odhlásit se",
-
     "login": "Přihlásit se",
     "register": "Registrovat",
     "email": "E-mailová adresa",
@@ -37,7 +35,6 @@
     "confirm_password_desc": "Toto je zabezpečená oblast aplikace. Před pokračováním prosím potvrďte své heslo.",
     "confirm": "Potvrdit",
     "confirming": "Potvrzování…",
-
     "dashboard": "Přehled",
     "net_balance": "Čistý zůstatek",
     "income": "Příjmy",
@@ -51,7 +48,6 @@
     "no_upcoming_payments": "Žádné nadcházející platby.",
     "no_pending_todos": "Vše hotovo! Žádné čekající úkoly.",
     "add_transaction": "Přidat transakci",
-
     "transactions": "Transakce",
     "new_transaction": "Nová transakce",
     "edit_transaction": "Upravit transakci",
@@ -79,7 +75,6 @@
     "cancel": "Zrušit",
     "edit": "Upravit",
     "delete": "Smazat",
-
     "recurring_payments": "Pravidelné platby",
     "new_recurring": "Nová pravidelná platba",
     "edit_recurring": "Upravit pravidelnou platbu",
@@ -95,7 +90,6 @@
     "no_recurring": "Žádné pravidelné platby.",
     "activate": "Aktivovat",
     "deactivate": "Deaktivovat",
-
     "todos": "Úkoly",
     "add_todo": "Přidat úkol…",
     "priority": "Priorita",
@@ -111,7 +105,6 @@
     "no_todos": "Žádné úkoly nenalezeny.",
     "overdue": "Po termínu",
     "delete_todo_confirm": "Smazat tento úkol?",
-
     "shopping_lists": "Nákupní seznamy",
     "new_list": "Nový seznam",
     "edit_list": "Upravit seznam",
@@ -127,7 +120,6 @@
     "item_name": "Název položky",
     "delete_list_confirm": "Smazat tento seznam?",
     "delete_item_confirm": "Smazat tuto položku?",
-
     "categories": "Kategorie",
     "new_category": "Nová kategorie",
     "edit_category": "Upravit kategorii",
@@ -135,7 +127,6 @@
     "icon": "Ikona",
     "no_categories": "Žádné kategorie nenalezeny.",
     "delete_category_confirm": "Smazat tuto kategorii?",
-
     "users": "Uživatelé",
     "new_member": "Přidat člena",
     "edit_member": "Upravit člena",
@@ -148,7 +139,6 @@
     "delete_user_confirm": "Smazat tohoto uživatele?",
     "display_name": "Zobrazované jméno",
     "avatar_color": "Barva avataru",
-
     "profile": "Profil",
     "profile_info": "Informace o profilu",
     "update_profile": "Informace o vašem účtu a e-mailová adresa.",
@@ -159,12 +149,10 @@
     "delete_account": "Smazat účet",
     "delete_account_desc": "Po smazání účtu budou trvale odstraněna všechna jeho data.",
     "saved": "Uloženo.",
-
     "user_created": "Uživatel byl úspěšně vytvořen.",
     "user_updated": "Uživatel byl úspěšně aktualizován.",
     "user_deleted": "Uživatel byl úspěšně smazán.",
     "cannot_delete_self": "Nemůžete smazat svůj vlastní účet zde.",
-
     "no_category": "— Bez kategorie —",
     "select_member": "— Vyberte člena rodiny —",
     "optional": "nepovinné",
@@ -181,7 +169,7 @@
     "active_lists": "Aktivní seznamy",
     "no_archived_lists": "Žádné archivované seznamy.",
     "create_list": "Vytvořit seznam",
-    "creating": "Vytváření\u2026",
+    "creating": "Vytváření…",
     "open": "Otevřít",
     "view": "Zobrazit",
     "list_name": "Název seznamu",
@@ -202,7 +190,7 @@
     "confirm_account_deletion": "Potvrdit smazání účtu",
     "confirm_deletion_desc": "Zadejte heslo pro trvalé smazání účtu.",
     "yes_delete_account": "Ano, smazat můj účet",
-    "deleting": "Mazání\u2026",
+    "deleting": "Mazání…",
     "email_unverified": "Vaše e-mailová adresa není ověřena.",
     "delete_recurring_confirm": "Smazat tuto pravidelnou platbu?",
     "overdue_badge": "po splatnosti",
@@ -211,7 +199,6 @@
     "by": "od",
     "items": "položek",
     "add_item_label": "Přidat položku",
-
     "nav_family": "Rodiny",
     "families": "Rodiny",
     "new_family": "Nová rodina",
@@ -250,5 +237,29 @@
     "incomplete_shopping_lists": "Nekompletní nákupy",
     "complete_shopping_lists": "Kompletní nákupy",
     "no_incomplete_lists": "Žádné nekompletní nákupní seznamy.",
-    "no_complete_lists": "Žádné dokončené nákupní seznamy."
+    "no_complete_lists": "Žádné dokončené nákupní seznamy.",
+    "nav_calendar": "Kalendář",
+    "calendar": "Kalendář",
+    "new_event": "Nová událost",
+    "edit_event": "Upravit událost",
+    "event_title": "Název události",
+    "start_date": "Začátek",
+    "end_date": "Konec",
+    "all_day": "Celý den",
+    "location": "Místo",
+    "recurrence": "Opakování",
+    "daily": "Denně",
+    "weekly": "Týdně",
+    "no_recurrence": "Neopakuje se",
+    "repeat_until": "Opakovat do",
+    "reminder": "Připomínka",
+    "minutes_before": "minut předem",
+    "delete_event_confirm": "Smazat tuto událost?",
+    "personal_event": "Osobní událost",
+    "family_event": "Rodinná událost",
+    "today": "Dnes",
+    "week": "Týden",
+    "day": "Den",
+    "color": "Barva",
+    "create": "Vytvořit"
 }

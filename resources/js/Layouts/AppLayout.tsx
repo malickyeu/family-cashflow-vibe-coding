@@ -29,6 +29,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
         { label: t('nav_transactions'), href: () => route('transactions.index'), icon: 'bi-arrow-left-right', routeName: 'transactions.*' },
         { label: t('categories'),       href: () => route('categories.index'),   icon: 'bi-tags',             routeName: 'categories.*' },
         { label: t('nav_recurring'),    href: () => route('recurring.index'),    icon: 'bi-arrow-repeat',     routeName: 'recurring.*' },
+        { label: t('nav_calendar'),     href: () => route('calendar.index'),     icon: 'bi-calendar3',        routeName: 'calendar.*' },
         { label: t('nav_todos'),        href: () => route('todos.index'),        icon: 'bi-check2-square',    routeName: 'todos.*' },
         { label: t('nav_shopping'),     href: () => route('shopping.index'),     icon: 'bi-cart3',            routeName: 'shopping.*' },
         { label: t('nav_family'),       href: () => route('families.index'),     icon: 'bi-people',           routeName: 'families.*' },
