@@ -9,6 +9,7 @@ class CalendarEvent extends Model
     protected $fillable = [
         'user_id',
         'family_id',
+        'shared_to_family',
         'title',
         'description',
         'start_datetime',
@@ -23,14 +24,17 @@ class CalendarEvent extends Model
         'recurrence_end_date',
         'parent_event_id',
         'reminder_minutes',
+        'attendants',
     ];
     protected $casts = [
         'start_datetime' => 'datetime',
         'end_datetime' => 'datetime',
         'all_day' => 'boolean',
+        'shared_to_family' => 'boolean',
         'is_recurring' => 'boolean',
         'recurrence_days' => 'array',
         'recurrence_end_date' => 'date',
+        'attendants' => 'array',
     ];
     public function user(): BelongsTo
     {

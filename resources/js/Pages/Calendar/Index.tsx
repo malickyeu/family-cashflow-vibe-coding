@@ -1,7 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import AppLayout from '@/Layouts/AppLayout';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { useTrans } from '@/hooks/useTranslation';
+import { PageProps } from '@/types';
+import EventTooltip from '@/Components/EventTooltip';
+
+interface User {
+    id: number;
+    name: string;
+}
 
 interface CalendarEvent {
     id: number;
@@ -12,25 +19,26 @@ interface CalendarEvent {
     allDay: boolean;
     location: string | null;
     color: string;
-    user: {
-        id: number;
-        name: string;
-    };
+    user: User;
     family: {
         id: number;
         name: string;
     } | null;
     recurrenceType: string;
     isRecurring: boolean;
+    attendants: User[];
 }
 
 interface Props {
     events: CalendarEvent[];
     currentDate: string;
+    familyMembers: User[];
 }
 
-export default function Index({ events, currentDate }: Props) {
+export default function Index({ events, currentDate, familyMembers }: Props) {
     const t = useTrans();
+    const { auth } = usePage<PageProps>().props;
+    const currentUserId = auth.user.id;
     const [view, setView] = useState<'month' | 'week' | 'day'>('month');
     const [currentDate2, setCurrentDate2] = useState(new Date(currentDate));
     const [showEventModal, setShowEventModal] = useState(false);
@@ -38,6 +46,9 @@ export default function Index({ events, currentDate }: Props) {
     const [draggedEvent, setDraggedEvent] = useState<CalendarEvent | null>(null);
     const [showPersonalEvents, setShowPersonalEvents] = useState(true);
     const [showFamilyEvents, setShowFamilyEvents] = useState(true);
+    const [tooltipEvent, setTooltipEvent] = useState<CalendarEvent | null>(null);
+    const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null);
+    const tooltipRef = useRef<HTMLDivElement>(null);
     const [formData, setFormData] = useState({
         title: '',
         description: '',
@@ -50,7 +61,64 @@ export default function Index({ events, currentDate }: Props) {
         recurrence_interval: 1,
         recurrence_end_date: '',
         reminder_minutes: 0,
+        attendants: [] as number[],
+        shared_to_family: false,
     });
+
+    const canEditEvent = (event: CalendarEvent) => {
+        return event.user.id === currentUserId;
+    };
+
+    const getEventTooltip = (event: CalendarEvent) => {
+        const startTime = new Date(event.start).toLocaleString(navigator.language, { 
+            day: 'numeric', 
+            month: 'short', 
+            year: 'numeric',
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+        const endTime = new Date(event.end).toLocaleString(navigator.language, { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+        
+        let tooltip = `${event.title}\n`;
+        tooltip += `${startTime} - ${endTime}\n`;
+        if (event.description) tooltip += `\n${event.description}\n`;
+        if (event.location) tooltip += `\n📍 ${event.location}\n`;
+        tooltip += `\n👤 ${event.user.name}`;
+        if (event.family) tooltip += `\n👨‍👩‍👧‍👦 ${event.family.name}`;
+        if (event.isRecurring) tooltip += `\n🔄 Opakující se (${event.recurrenceType})`;
+        
+        return tooltip;
+    };
+
+    const showTooltip = (event: CalendarEvent, e: React.MouseEvent) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        setTooltipEvent(event);
+        setTooltipPosition({
+            x: rect.left + rect.width / 2,
+            y: rect.top,
+        });
+    };
+
+    const hideTooltip = () => {
+        setTooltipEvent(null);
+        setTooltipPosition(null);
+    };
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (tooltipRef.current && !tooltipRef.current.contains(event.target as Node)) {
+                hideTooltip();
+            }
+        };
+
+        if (tooltipEvent) {
+            document.addEventListener('mousedown', handleClickOutside);
+            return () => document.removeEventListener('mousedown', handleClickOutside);
+        }
+    }, [tooltipEvent]);
 
     const filteredEvents = events.filter(event => {
         if (event.family === null && !showPersonalEvents) return false;
@@ -133,6 +201,8 @@ export default function Index({ events, currentDate }: Props) {
             recurrence_interval: 1,
             recurrence_end_date: '',
             reminder_minutes: 0,
+            attendants: [],
+            shared_to_family: false,
         });
         setEditingEvent(null);
         setShowEventModal(true);
@@ -151,6 +221,8 @@ export default function Index({ events, currentDate }: Props) {
             recurrence_interval: 1,
             recurrence_end_date: '',
             reminder_minutes: 0,
+            attendants: event.attendants ? event.attendants.map(a => a.id) : [],
+            shared_to_family: event.sharedToFamily ?? false,
         });
         setEditingEvent(event);
         setShowEventModal(true);
@@ -235,16 +307,37 @@ export default function Index({ events, currentDate }: Props) {
                                 {day && (<>
                                     <div className="p-2"><span className={`badge ${isToday ? 'bg-primary' : 'bg-light text-dark'}`} style={{ fontSize: '0.75rem' }}>{day.getDate()}</span></div>
                                     <div className="px-2 pb-2">
-                                        {dayEvents.slice(0, 3).map(event => (
-                                            <div key={event.id} className="mb-1 p-1 rounded text-white" style={{ backgroundColor: event.color, fontSize: '0.7rem', cursor: 'grab' }}
-                                                draggable onDragStart={(e) => handleDragStart(e, event)} onClick={(e) => { e.stopPropagation(); openEditEventModal(event); }}>
-                                                <div className="text-truncate">
-                                                    {event.isRecurring && <i className="bi bi-arrow-repeat me-1" />}
-                                                    {event.family ? <i className="bi bi-people me-1" /> : <i className="bi bi-person me-1" />}
-                                                    {event.title}
+                                        {dayEvents.slice(0, 3).map(event => {
+                                            const isEditable = canEditEvent(event);
+                                            return (
+                                                <div 
+                                                    key={event.id} 
+                                                    className="mb-1 p-1 rounded text-white" 
+                                                    style={{ 
+                                                        backgroundColor: event.color, 
+                                                        fontSize: '0.7rem', 
+                                                        cursor: isEditable ? 'grab' : 'default',
+                                                        opacity: isEditable ? 1 : 0.8
+                                                    }}
+                                                    onMouseEnter={(e) => showTooltip(event, e)}
+                                                    onMouseLeave={hideTooltip}
+                                                    draggable={isEditable} 
+                                                    onDragStart={isEditable ? (e) => handleDragStart(e, event) : undefined} 
+                                                    onClick={(e) => { 
+                                                        e.stopPropagation(); 
+                                                        if (isEditable) openEditEventModal(event); 
+                                                    }}>
+                                                    <div className="text-truncate">
+                                                        {event.isRecurring && <i className="bi bi-arrow-repeat me-1" />}
+                                                        {event.family
+                                            ? <i className="bi bi-people me-1" />
+                                            : <i className={`bi ${event.sharedToFamily ? 'bi-eye-fill' : 'bi-eye-slash-fill'} me-1`} style={{ opacity: 0.85 }} />}
+                                                        {event.title}
+                                                        {!isEditable && <i className="bi bi-lock-fill ms-1" style={{ fontSize: '0.6rem' }} />}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                         {dayEvents.length > 3 && <div className="text-muted" style={{ fontSize: '0.7rem' }}>+{dayEvents.length - 3} další</div>}
                                     </div>
                                 </>)}
@@ -295,16 +388,37 @@ export default function Index({ events, currentDate }: Props) {
                                         newDate.setHours(hour, 0, 0, 0);
                                         handleDrop(e, newDate);
                                     }}>
-                                    {dayEvents.map(event => (
-                                        <div key={event.id} className="p-1 mb-1 rounded text-white" 
-                                            style={{ backgroundColor: event.color, fontSize: '0.7rem', cursor: 'grab' }}
-                                            draggable
-                                            onDragStart={(e) => handleDragStart(e, event)}
-                                            onClick={(e) => { e.stopPropagation(); openEditEventModal(event); }}>
-                                            <div className="fw-bold">{event.title}</div>
-                                            <div>{new Date(event.start).toLocaleTimeString(navigator.language, { hour: '2-digit', minute: '2-digit' })}</div>
-                                        </div>
-                                    ))}
+                                    {dayEvents.map(event => {
+                                        const isEditable = canEditEvent(event);
+                                        return (
+                                            <div 
+                                                key={event.id} 
+                                                className="p-1 mb-1 rounded text-white" 
+                                                style={{ 
+                                                    backgroundColor: event.color, 
+                                                    fontSize: '0.7rem', 
+                                                    cursor: isEditable ? 'grab' : 'default',
+                                                    opacity: isEditable ? 1 : 0.8
+                                                }}
+                                                onMouseEnter={(e) => showTooltip(event, e)}
+                                                onMouseLeave={hideTooltip}
+                                                draggable={isEditable}
+                                                onDragStart={isEditable ? (e) => handleDragStart(e, event) : undefined}
+                                                onClick={(e) => { 
+                                                    e.stopPropagation(); 
+                                                    if (isEditable) openEditEventModal(event); 
+                                                }}>
+                                                <div className="fw-bold d-flex align-items-center gap-1">
+                                                    {!event.family && <i className={`bi ${event.sharedToFamily ? 'bi-eye-fill' : 'bi-eye-slash-fill'}`} style={{ fontSize: '0.65rem', opacity: 0.85 }} />}
+                                                    {event.family && <i className="bi bi-people" style={{ fontSize: '0.65rem' }} />}
+                                                    {event.title}
+                                                    {event.isRecurring && <i className="bi bi-arrow-repeat" style={{ fontSize: '0.65rem' }} />}
+                                                    {!isEditable && <i className="bi bi-lock-fill" style={{ fontSize: '0.6rem' }} />}
+                                                </div>
+                                                <div>{new Date(event.start).toLocaleTimeString(navigator.language, { hour: '2-digit', minute: '2-digit' })}</div>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             );
                         })}
@@ -342,23 +456,40 @@ export default function Index({ events, currentDate }: Props) {
                                     newDate.setHours(hour, 0, 0, 0);
                                     handleDrop(e, newDate);
                                 }}>
-                                {hourEvents.map(event => (
-                                    <div key={event.id} className="p-2 m-2 rounded text-white" 
-                                        style={{ backgroundColor: event.color, cursor: 'grab' }}
-                                        draggable
-                                        onDragStart={(e) => handleDragStart(e, event)}
-                                        onClick={(e) => { e.stopPropagation(); openEditEventModal(event); }}>
-                                        <div className="fw-bold d-flex align-items-center gap-2">
-                                            {event.family ? <i className="bi bi-people" /> : <i className="bi bi-person" />}
-                                            {event.title}
-                                            {event.isRecurring && <i className="bi bi-arrow-repeat" />}
+                                {hourEvents.map(event => {
+                                    const isEditable = canEditEvent(event);
+                                    return (
+                                        <div 
+                                            key={event.id} 
+                                            className="p-2 m-2 rounded text-white" 
+                                            style={{ 
+                                                backgroundColor: event.color, 
+                                                cursor: isEditable ? 'grab' : 'default',
+                                                opacity: isEditable ? 1 : 0.8
+                                            }}
+                                            onMouseEnter={(e) => showTooltip(event, e)}
+                                            onMouseLeave={hideTooltip}
+                                            draggable={isEditable}
+                                            onDragStart={isEditable ? (e) => handleDragStart(e, event) : undefined}
+                                            onClick={(e) => { 
+                                                e.stopPropagation(); 
+                                                if (isEditable) openEditEventModal(event); 
+                                            }}>
+                                            <div className="fw-bold d-flex align-items-center gap-2">
+                                                {event.family
+                                                    ? <i className="bi bi-people" />
+                                                    : <i className={`bi ${event.sharedToFamily ? 'bi-eye-fill' : 'bi-eye-slash-fill'}`} style={{ opacity: 0.9 }} />}
+                                                {event.title}
+                                                {event.isRecurring && <i className="bi bi-arrow-repeat" />}
+                                                {!isEditable && <i className="bi bi-lock-fill" style={{ fontSize: '0.8rem' }} />}
+                                            </div>
+                                            <div className="small">
+                                                {new Date(event.start).toLocaleTimeString(navigator.language, { hour: '2-digit', minute: '2-digit' })} - {new Date(event.end).toLocaleTimeString(navigator.language, { hour: '2-digit', minute: '2-digit' })}
+                                            </div>
+                                            {event.location && <div className="small"><i className="bi bi-geo-alt me-1" />{event.location}</div>}
                                         </div>
-                                        <div className="small">
-                                            {new Date(event.start).toLocaleTimeString(navigator.language, { hour: '2-digit', minute: '2-digit' })} - {new Date(event.end).toLocaleTimeString(navigator.language, { hour: '2-digit', minute: '2-digit' })}
-                                        </div>
-                                        {event.location && <div className="small"><i className="bi bi-geo-alt me-1" />{event.location}</div>}
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
                     );
@@ -474,6 +605,27 @@ export default function Index({ events, currentDate }: Props) {
                                         <input type="checkbox" className="form-check-input" id="allDay" checked={formData.all_day} onChange={(e) => setFormData({ ...formData, all_day: e.target.checked })} />
                                         <label className="form-check-label" htmlFor="allDay">{t('all_day')}</label>
                                     </div>
+                                    {!editingEvent?.family && (
+                                        <div className="mb-3 p-2 rounded border" style={{ backgroundColor: formData.shared_to_family ? 'rgba(25,135,84,0.1)' : 'rgba(108,117,125,0.08)' }}>
+                                            <div className="form-check mb-0">
+                                                <input
+                                                    type="checkbox"
+                                                    className="form-check-input"
+                                                    id="sharedToFamily"
+                                                    checked={formData.shared_to_family}
+                                                    onChange={(e) => setFormData({ ...formData, shared_to_family: e.target.checked })}
+                                                />
+                                                <label className="form-check-label d-flex align-items-center gap-2" htmlFor="sharedToFamily">
+                                                    <i className={`bi ${formData.shared_to_family ? 'bi-eye-fill text-success' : 'bi-eye-slash-fill text-muted'}`} />
+                                                    <span>
+                                                        {formData.shared_to_family
+                                                            ? 'Viditelné v rodinných kalendářích'
+                                                            : 'Pouze pro mě (skryté pro rodinu)'}
+                                                    </span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    )}
                                     <div className="mb-3">
                                         <label className="form-label">{t('location')}</label>
                                         <input type="text" className="form-control" value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} />
@@ -497,6 +649,41 @@ export default function Index({ events, currentDate }: Props) {
                                             ))}
                                         </div>
                                     </div>
+                                    {familyMembers.length > 0 && (
+                                        <div className="mb-3">
+                                            <label className="form-label">
+                                                <i className="bi bi-person-check-fill me-2" />
+                                                Účastníci z rodiny
+                                            </label>
+                                            <div className="border rounded p-2" style={{ maxHeight: '150px', overflowY: 'auto' }}>
+                                                {familyMembers.map(member => (
+                                                    <div key={member.id} className="form-check">
+                                                        <input
+                                                            className="form-check-input"
+                                                            type="checkbox"
+                                                            id={`attendant-${member.id}`}
+                                                            checked={formData.attendants.includes(member.id)}
+                                                            onChange={(e) => {
+                                                                if (e.target.checked) {
+                                                                    setFormData({ ...formData, attendants: [...formData.attendants, member.id] });
+                                                                } else {
+                                                                    setFormData({ ...formData, attendants: formData.attendants.filter(id => id !== member.id) });
+                                                                }
+                                                            }}
+                                                        />
+                                                        <label className="form-check-label" htmlFor={`attendant-${member.id}`}>
+                                                            {member.name}
+                                                        </label>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            {formData.attendants.length > 0 && (
+                                                <small className="text-muted">
+                                                    Vybráno: {formData.attendants.length} {formData.attendants.length === 1 ? 'účastník' : formData.attendants.length < 5 ? 'účastníci' : 'účastníků'}
+                                                </small>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="modal-footer">
                                     {editingEvent && (<button type="button" className="btn btn-danger me-auto" onClick={() => handleDelete(editingEvent.id)}><i className="bi bi-trash me-1" />{t('delete')}</button>)}
@@ -506,6 +693,34 @@ export default function Index({ events, currentDate }: Props) {
                             </form>
                         </div>
                     </div>
+                </div>
+            )}
+            {tooltipEvent && tooltipPosition && (
+                <div 
+                    ref={tooltipRef}
+                    style={{
+                        position: 'fixed',
+                        left: tooltipPosition.x,
+                        top: tooltipPosition.y - 10,
+                        transform: 'translate(-50%, -100%)',
+                        zIndex: 10000,
+                        pointerEvents: 'auto',
+                    }}
+                >
+                    <EventTooltip
+                        title={tooltipEvent.title}
+                        description={tooltipEvent.description}
+                        start={tooltipEvent.start}
+                        end={tooltipEvent.end}
+                        allDay={tooltipEvent.allDay}
+                        location={tooltipEvent.location}
+                        user={tooltipEvent.user}
+                        family={tooltipEvent.family}
+                        isRecurring={tooltipEvent.isRecurring}
+                        recurrenceType={tooltipEvent.recurrenceType}
+                        attendants={tooltipEvent.attendants}
+                        canEdit={canEditEvent(tooltipEvent)}
+                    />
                 </div>
             )}
         </AppLayout>
