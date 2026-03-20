@@ -70,6 +70,7 @@
     "no_transactions_found": "No transactions found.",
     "delete_transaction_confirm": "Delete this transaction?",
     "expense": "Expense",
+    "both": "Both",
     "auto": "auto",
     "showing": "Showing",
     "of": "of",
