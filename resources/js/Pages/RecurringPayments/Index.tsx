@@ -2,19 +2,11 @@ import { Head, Link, router } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import { RecurringPayment } from '@/types/models';
 import { useTrans } from '@/hooks/useTranslation';
+import { formatCurrency, formatDate, getDaysUntil } from '@/utils/formatters';
 
 interface Props {
     payments: RecurringPayment[];
     currency: string;
-}
-
-function fmt(amount: string | number, currency: string) {
-    return new Intl.NumberFormat('pl-PL', { style: 'currency', currency }).format(Number(amount));
-}
-
-function getDaysUntil(dateStr: string) {
-    const diff = Math.ceil((new Date(dateStr).getTime() - new Date().setHours(0,0,0,0)) / 86400000);
-    return diff;
 }
 
 export default function RecurringIndex({ payments, currency }: Props) {
@@ -60,7 +52,7 @@ export default function RecurringIndex({ payments, currency }: Props) {
                                 return (
                                     <tr key={p.id}>
                                         <td className="fw-semibold">{p.name}</td>
-                                        <td className="text-danger fw-semibold">{fmt(p.amount, currency)}</td>
+                                        <td className="text-danger fw-semibold">{formatCurrency(p.amount, currency)}</td>
                                         <td>
                                             <span className="badge bg-light text-dark border">
                                                 <i className={`bi ${p.frequency === 'monthly' ? 'bi-calendar-month' : 'bi-calendar-year'} me-1`} />
@@ -72,7 +64,7 @@ export default function RecurringIndex({ payments, currency }: Props) {
                                                 daysLeft <= 0 ? 'text-danger fw-semibold' :
                                                 daysLeft <= 3 ? 'text-warning fw-semibold' : 'text-muted'
                                             }>
-                                                {p.next_due_date}
+                                                {formatDate(p.next_due_date)}
                                                 {daysLeft <= 3 && daysLeft > 0 && (
                                                     <span className="badge bg-warning text-dark ms-1">{daysLeft}d</span>
                                                 )}
@@ -133,9 +125,9 @@ export default function RecurringIndex({ payments, currency }: Props) {
                                 {inactive.map((p) => (
                                     <tr key={p.id}>
                                         <td className="fw-semibold">{p.name}</td>
-                                        <td>{fmt(p.amount, currency)}</td>
+                                        <td>{formatCurrency(p.amount, currency)}</td>
                                         <td>{p.frequency === 'monthly' ? t('monthly') : t('yearly')}</td>
-                                        <td>{p.next_due_date}</td>
+                                        <td>{formatDate(p.next_due_date)}</td>
                                         <td>
                                             <button className="btn btn-sm btn-light text-success"
                                                 onClick={() => toggle(p)} title={t('activate')}>

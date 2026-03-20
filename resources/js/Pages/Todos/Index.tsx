@@ -1,8 +1,9 @@
+import { Head, Link, useForm, router } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
-import { Head, useForm, router } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import { Todo, User } from '@/types/models';
 import { useTrans } from '@/hooks/useTranslation';
+import { formatDate } from '@/utils/formatters';
 
 interface Filters { status?: string; priority?: string; assigned_to?: string; }
 interface Props { todos: Todo[]; users: User[]; filters: Filters; }
@@ -172,7 +173,7 @@ export default function TodosIndex({ todos, users, filters }: Props) {
                                         {todo.due_date && (
                                             <span className={`badge bg-light text-dark border ${isOverdue ? 'border-danger text-danger' : ''}`}>
                                                 <i className={`bi ${isOverdue ? 'bi-exclamation-triangle' : 'bi-calendar3'} me-1`} />
-                                                {todo.due_date}
+                                                {formatDate(todo.due_date)}
                                             </span>
                                         )}
                                         {todo.assigned_user && (

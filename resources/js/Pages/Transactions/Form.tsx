@@ -11,10 +11,6 @@ interface Props {
     currency: string;
 }
 
-function fmt(n: number) {
-    return n.toFixed(2);
-}
-
 export default function TransactionForm({ transaction, categories, users, currency }: Props) {
     const t = useTrans();
     const isEditing = !!transaction;
@@ -22,7 +18,7 @@ export default function TransactionForm({ transaction, categories, users, curren
 
     const { data, setData, post, put, processing, errors } = useForm({
         type:        transaction?.type        ?? 'expense' as 'income' | 'expense',
-        amount:      transaction ? fmt(parseFloat(transaction.amount)) : '',
+        amount:      transaction ? parseFloat(transaction.amount).toFixed(2) : '',
         category_id: String(transaction?.category_id ?? ''),
         date:        transaction?.date        ?? today,
         description: transaction?.description ?? '',

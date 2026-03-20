@@ -4,6 +4,7 @@ import AppLayout from '@/Layouts/AppLayout';
 import { PageProps } from '@/types';
 import { ShoppingList } from '@/types/models';
 import { useTrans } from '@/hooks/useTranslation';
+import { formatCurrency } from '@/utils/formatters';
 
 interface Props extends PageProps {
     lists: ShoppingList[];
@@ -147,13 +148,13 @@ export default function ShoppingIndex({ lists, showArchived, currency }: Props) 
                                         {totalPrice > 0 && (
                                             <div className="d-flex justify-content-between small mb-2">
                                                 <span className="text-muted">{t('total')}:</span>
-                                                <strong>{totalPrice.toFixed(2)} {currency}</strong>
+                                                <strong>{formatCurrency(totalPrice, currency)}</strong>
                                             </div>
                                         )}
                                         {paidPrice > 0 && totalPrice > 0 && (
                                             <div className="d-flex justify-content-between small mb-2">
                                                 <span className="text-success">{t('paid')}:</span>
-                                                <span className="text-success fw-semibold">{paidPrice.toFixed(2)} {currency}</span>
+                                                <span className="text-success fw-semibold">{formatCurrency(paidPrice, currency)}</span>
                                             </div>
                                         )}
 

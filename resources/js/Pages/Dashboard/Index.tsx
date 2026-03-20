@@ -2,6 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import { Transaction, RecurringPayment, Todo } from '@/types/models';
 import { useTrans } from '@/hooks/useTranslation';
+import { formatCurrency, formatDate } from '@/utils/formatters';
 
 interface Stats {
     balance: number;
@@ -42,10 +43,6 @@ interface ShoppingListSummary {
     };
 }
 
-function fmt(amount: number, currency: string) {
-    return new Intl.NumberFormat('pl-PL', { style: 'currency', currency }).format(amount);
-}
-
 const priorityBadge = (p: string) =>
     p === 'high' ? 'bg-danger' : p === 'medium' ? 'bg-warning text-dark' : 'bg-secondary';
 
@@ -78,7 +75,7 @@ export default function DashboardIndex({
                             <div className="d-flex justify-content-between align-items-start">
                                 <div>
                                     <p className="mb-1 opacity-75 small fw-semibold text-uppercase">{t('net_balance')}</p>
-                                    <h3 className="mb-0 fw-bold">{fmt(stats.balance, currency)}</h3>
+                                    <h3 className="mb-0 fw-bold">{formatCurrency(stats.balance, currency)}</h3>
                                 </div>
                                 <i className="bi bi-wallet2 fs-1 opacity-50" />
                             </div>
@@ -91,7 +88,7 @@ export default function DashboardIndex({
                             <div className="d-flex justify-content-between align-items-start">
                                 <div>
                                     <p className="mb-1 opacity-75 small fw-semibold text-uppercase">{t('income')}</p>
-                                    <h3 className="mb-0 fw-bold">{fmt(stats.incomeTotal, currency)}</h3>
+                                    <h3 className="mb-0 fw-bold">{formatCurrency(stats.incomeTotal, currency)}</h3>
                                 </div>
                                 <i className="bi bi-arrow-down-left-circle fs-1 opacity-50" />
                             </div>
@@ -104,7 +101,7 @@ export default function DashboardIndex({
                             <div className="d-flex justify-content-between align-items-start">
                                 <div>
                                     <p className="mb-1 opacity-75 small fw-semibold text-uppercase">{t('expenses')}</p>
-                                    <h3 className="mb-0 fw-bold">{fmt(stats.expenseTotal, currency)}</h3>
+                                    <h3 className="mb-0 fw-bold">{formatCurrency(stats.expenseTotal, currency)}</h3>
                                 </div>
                                 <i className="bi bi-arrow-up-right-circle fs-1 opacity-50" />
                             </div>
@@ -129,10 +126,10 @@ export default function DashboardIndex({
                                 <div className="d-flex gap-1 align-items-end w-100 justify-content-center">
                                     <div className="bg-primary rounded-top"
                                         style={{ width: '40%', height: `${(d.income / maxChart) * 100}px`, minHeight: 2 }}
-                                        title={`${t('income')}: ${fmt(d.income, currency)}`} />
+                                        title={`${t('income')}: ${formatCurrency(d.income, currency)}`} />
                                     <div className="bg-danger rounded-top"
                                         style={{ width: '40%', height: `${(d.expense / maxChart) * 100}px`, minHeight: 2 }}
-                                        title={`${t('expense')}: ${fmt(d.expense, currency)}`} />
+                                        title={`${t('expense')}: ${formatCurrency(d.expense, currency)}`} />
                                 </div>
                                 <small className="text-muted" style={{ fontSize: '0.65rem', whiteSpace: 'nowrap' }}>{d.month}</small>
                             </div>
@@ -166,11 +163,11 @@ export default function DashboardIndex({
                                                     <span className="badge bg-info text-dark ms-1" style={{ fontSize: '0.65rem' }}>{t('auto')}</span>
                                                 )}
                                             </div>
-                                            <small className="text-muted">{tx.date} · {tx.user.display_name ?? tx.user.name}</small>
+                                            <small className="text-muted">{formatDate(tx.date)} · {tx.user.display_name ?? tx.user.name}</small>
                                         </div>
                                     </div>
                                     <span className={`fw-semibold ${tx.type === 'income' ? 'text-success' : 'text-danger'}`}>
-                                        {tx.type === 'income' ? '+' : '-'}{fmt(parseFloat(tx.amount), currency)}
+                                        {tx.type === 'income' ? '+' : '-'}{formatCurrency(parseFloat(tx.amount), currency)}
                                     </span>
                                 </li>
                             ))}
@@ -199,11 +196,11 @@ export default function DashboardIndex({
                                     <div>
                                         <div className="fw-semibold" style={{ fontSize: '0.9rem' }}>{p.name}</div>
                                         <small className="text-muted">
-                                            {t('next_due')} {p.next_due_date} · {p.frequency}
+                                            {t('next_due')} {formatDate(p.next_due_date)} · {t(p.frequency)}
                                         </small>
                                     </div>
                                     <span className="badge bg-warning text-dark fs-6 px-2 py-1">
-                                        {fmt(parseFloat(p.amount), currency)}
+                                        {formatCurrency(parseFloat(p.amount), currency)}
                                     </span>
                                 </li>
                             ))}
@@ -326,7 +323,7 @@ export default function DashboardIndex({
                                 <span className="fw-semibold" style={{ fontSize: '0.9rem' }}>{todo.title}</span>
                                 {todo.due_date && (
                                     <small className={`ms-2 ${todo.due_date < new Date().toISOString().split('T')[0] ? 'text-danger' : 'text-muted'}`}>
-                                        <i className="bi bi-calendar3 me-1" />{todo.due_date}
+                                        <i className="bi bi-calendar3 me-1" />{formatDate(todo.due_date)}
                                     </small>
                                 )}
                             </div>

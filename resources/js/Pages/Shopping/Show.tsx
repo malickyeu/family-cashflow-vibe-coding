@@ -4,6 +4,7 @@ import AppLayout from '@/Layouts/AppLayout';
 import { PageProps } from '@/types';
 import { ShoppingList, ShoppingListItem } from '@/types/models';
 import { useTrans } from '@/hooks/useTranslation';
+import { formatCurrency } from '@/utils/formatters';
 
 interface Props extends PageProps { 
     list: ShoppingList; 
@@ -108,15 +109,15 @@ export default function ShoppingShow({ list, currency }: Props) {
                         <div className="mt-3 d-flex gap-3 justify-content-start flex-wrap small">
                             <div className="d-flex align-items-center gap-2">
                                 <span className="text-muted">{t('total')}:</span>
-                                <strong className="fs-6">{totalPrice.toFixed(2)} {currency}</strong>
+                                <strong className="fs-6">{formatCurrency(totalPrice, currency)}</strong>
                             </div>
                             <div className="d-flex align-items-center gap-2">
                                 <span className="text-muted">{t('paid')}:</span>
-                                <strong className="text-success">{paidPrice.toFixed(2)} {currency}</strong>
+                                <strong className="text-success">{formatCurrency(paidPrice, currency)}</strong>
                             </div>
                             <div className="d-flex align-items-center gap-2">
                                 <span className="text-muted">{t('unpaid')}:</span>
-                                <strong className="text-warning">{unpaidPrice.toFixed(2)} {currency}</strong>
+                                <strong className="text-warning">{formatCurrency(unpaidPrice, currency)}</strong>
                             </div>
                         </div>
                     )}
@@ -149,7 +150,7 @@ export default function ShoppingShow({ list, currency }: Props) {
                                             </span>
                                             {itemPrice > 0 && (
                                                 <span className="badge bg-light text-dark border">
-                                                    {itemTotal.toFixed(2)} {currency}
+                                                    {formatCurrency(itemTotal, currency)}
                                                 </span>
                                             )}
                                         </div>
@@ -191,7 +192,7 @@ export default function ShoppingShow({ list, currency }: Props) {
                                             </span>
                                             {itemPrice > 0 && (
                                                 <span className="badge bg-light text-muted border">
-                                                    {itemTotal.toFixed(2)} {currency}
+                                                    {formatCurrency(itemTotal, currency)}
                                                 </span>
                                             )}
                                         </div>

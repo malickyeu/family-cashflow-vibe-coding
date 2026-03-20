@@ -2,6 +2,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import { Transaction, Category, User, PaginatedData } from '@/types/models';
 import { useTrans } from '@/hooks/useTranslation';
+import { formatCurrency, formatDate } from '@/utils/formatters';
 
 interface Summary { income: number; expense: number; balance: number; }
 interface Filters { month?: string; category_id?: string; type?: string; user_id?: string; }
@@ -13,10 +14,6 @@ interface Props {
     users: User[];
     filters: Filters;
     currency: string;
-}
-
-function fmt(amount: number | string, currency: string) {
-    return new Intl.NumberFormat('pl-PL', { style: 'currency', currency }).format(Number(amount));
 }
 
 export default function TransactionsIndex({
@@ -57,7 +54,7 @@ export default function TransactionsIndex({
                     <div key={key} className="col-md-4">
                         <div className={`card border text-center py-2 px-3 ${cls}`}>
                             <small className="text-uppercase fw-semibold opacity-75">{label}</small>
-                            <strong className="fs-5">{fmt(val, currency)}</strong>
+                            <strong className="fs-5">{formatCurrency(val, currency)}</strong>
                         </div>
                     </div>
                 ))}
@@ -132,7 +129,7 @@ export default function TransactionsIndex({
                         <tbody>
                             {transactions.data.map((tx) => (
                                 <tr key={tx.id}>
-                                    <td><small className="text-muted">{tx.date}</small></td>
+                                    <td><small className="text-muted">{formatDate(tx.date)}</small></td>
                                     <td>
                                         <span style={{ fontSize: '0.9rem' }}>
                                             {tx.description || <span className="text-muted">—</span>}
@@ -165,7 +162,7 @@ export default function TransactionsIndex({
                                         </span>
                                     </td>
                                     <td className={`text-end fw-semibold ${tx.type === 'income' ? 'text-success' : 'text-danger'}`}>
-                                        {tx.type === 'income' ? '+' : '-'}{fmt(tx.amount, currency)}
+                                        {tx.type === 'income' ? '+' : '-'}{formatCurrency(tx.amount, currency)}
                                     </td>
                                     <td>
                                         <div className="d-flex gap-1 justify-content-end">
